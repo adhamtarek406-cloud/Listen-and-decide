@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Listen and Decide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
+<style>
+/* Layout: one clip at a time on a single centred column; progress rail on top, results table at the end. Tamara design system, light only by design. */
+:root{
+  color-scheme:light;
+  --lavender:#9600f1; --deep:#5300ba; --active:#40008f; --lilac:#e5cfff; --wash:#f6eeff;
+  --ink:#2a3051; --body:#444c6d; --muted:#707698; --line:#d9dbe9; --line-soft:#e6e6f3;
+  --page:#f2f2ff; --card:#ffffff; --focus:#5b22ff;
+  --sat-bg:#daf8dd; --sat-ink:#164922; --sat-mid:#008419;
+  --part-bg:#fff9d9; --part-ink:#5b3a22; --part-mid:#985628;
+  --dis-bg:#fff1da; --dis-ink:#7a1012; --dis-mid:#c10000;
+  --f-display:"Outfit","Plus Jakarta Sans",system-ui,sans-serif;
+  --f-body:"Plus Jakarta Sans",system-ui,sans-serif;
+  --f-ar:"IBM Plex Sans Arabic","Plus Jakarta Sans",system-ui,sans-serif;
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-pill:999px;
+  --sh-sm:0 2px 8px rgba(42,48,81,.07); --sh-md:0 8px 24px rgba(42,48,81,.09); --sh-brand:0 12px 32px rgba(150,0,241,.24);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--page);color:var(--body);font-family:var(--f-body);font-size:16px;line-height:1.55;padding-inline:16px;padding-block:24px 48px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);color:var(--ink);margin:0;text-wrap:balance}
+h1{font-size:clamp(28px,5vw,40px);line-height:1.02;letter-spacing:-.03em}
+h2{font-size:22px;line-height:1.2;letter-spacing:-.01em}
+p{margin:0}
+button{font:inherit;cursor:pointer}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.pill{display:inline-flex;align-items:center;gap:8px;background:var(--lavender);color:#fff;font-weight:700;font-size:14px;padding:6px 16px;border-radius:var(--r-pill);width:fit-content}
+.pill span{opacity:.8;font-weight:500}
+.card{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--sh-sm);padding:24px;display:flex;flex-direction:column;gap:16px}
+@media (max-width:520px){.card{padding:18px}}
+.lead{font-size:17px;color:var(--body);max-width:62ch}
+.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:620px){.legend{grid-template-columns:1fr}}
+.leg{border-radius:var(--r-md);padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.leg b{font-family:var(--f-display);font-size:17px}
+.leg small{font-size:13px;line-height:1.4}
+.o-sat{background:var(--sat-bg);color:var(--sat-ink)}
+.o-part{background:var(--part-bg);color:var(--part-ink)}
+.o-dis{background:var(--dis-bg);color:var(--dis-ink)}
+.tip{background:var(--wash);border-radius:var(--r-md);padding:12px 14px;font-size:14px;color:var(--ink)}
+.tip b{color:var(--ink)}
+.btn{border:0;border-radius:var(--r-pill);padding:12px 22px;font-weight:700;font-size:15px;background:var(--lavender);color:#fff;box-shadow:var(--sh-brand);transition:background .15s}
+.btn:hover{background:var(--deep)} .btn:active{background:var(--active)}
+.btn[disabled]{background:var(--line-soft);color:var(--muted);box-shadow:none;cursor:not-allowed}
+.btn-ghost{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:var(--r-pill);padding:10px 18px;font-weight:600;font-size:14px}
+.btn-ghost:hover{background:var(--wash);border-color:var(--lilac)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:600;color:var(--ink);font-size:14px}
+input[type=text],textarea{font:inherit;border:1.5px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;color:var(--ink);background:#fff;width:100%}
+textarea{min-height:84px;resize:vertical}
+
+/* progress rail */
+.rail{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dot{min-width:40px;height:30px;border-radius:var(--r-pill);border:1.5px solid var(--line);background:var(--card);color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.04em;display:grid;place-items:center;padding:0 8px}
+.dot.cur{border-color:var(--lavender);color:var(--lavender)}
+.dot.done{background:var(--ink);border-color:var(--ink);color:#fff}
+.rail .count{margin-left:auto;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.player{display:flex;gap:14px;align-items:center;background:var(--ink);color:#fff;border-radius:var(--r-lg);padding:16px 18px}
+.play{width:56px;height:56px;border-radius:50%;border:0;background:var(--lavender);color:#fff;display:grid;place-items:center;flex:none;box-shadow:var(--sh-brand)}
+.play:hover{background:#a92cff}
+.play svg{width:22px;height:22px}
+.player .meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+.player .meta b{font-family:var(--f-display);font-size:18px}
+.player .meta small{color:#c9cbe0;font-size:13px}
+.bars{display:flex;gap:3px;align-items:center;height:28px;margin-left:auto}
+.bars i{display:block;width:4px;border-radius:2px;background:#6c7197;height:8px}
+.speaking .bars i{background:var(--lilac);animation:bar 0.9s ease-in-out infinite}
+.bars i:nth-child(2){animation-delay:.1s}.bars i:nth-child(3){animation-delay:.25s}.bars i:nth-child(4){animation-delay:.4s}.bars i:nth-child(5){animation-delay:.15s}.bars i:nth-child(6){animation-delay:.3s}
+@keyframes bar{0%,100%{height:6px}50%{height:26px}}
+@media (prefers-reduced-motion:reduce){.speaking .bars i{animation:none;height:18px}}
+@media (max-width:420px){.bars{display:none}}
+
+.script{border:1.5px dashed var(--line);border-radius:var(--r-md);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.script .said{font-size:18px;color:var(--ink);line-height:1.6}
+.script .said[dir=rtl]{font-family:var(--f-ar);font-size:20px;line-height:1.8}
+.script .tr{font-size:14px;color:var(--muted)}
+mark{background:var(--lilac);color:var(--ink);border-radius:4px;padding:0 3px}
+.note{font-size:13px;color:var(--muted)}
+
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:560px){.choices{grid-template-columns:1fr}}
+.choice{border:2px solid transparent;border-radius:var(--r-md);padding:14px;font-family:var(--f-display);font-weight:600;font-size:17px;text-align:left;display:flex;align-items:center;gap:10px}
+.choice .tick{width:20px;height:20px;border-radius:50%;border:2px solid currentColor;flex:none;display:grid;place-items:center;opacity:.6}
+.choice[aria-pressed=true]{border-color:currentColor;box-shadow:var(--sh-md)}
+.choice[aria-pressed=true] .tick{opacity:1;background:currentColor}
+.choice[aria-pressed=true] .tick::after{content:"";width:6px;height:6px;border-radius:50%;background:#fff}
+.choice.o-sat{color:var(--sat-ink)} .choice.o-part{color:var(--part-ink)} .choice.o-dis{color:var(--dis-ink)}
+.choice[disabled]{cursor:default}
+.choice.dim{opacity:.45}
+
+.verdict{border-radius:var(--r-lg);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.verdict h3{font-size:20px}
+.verdict ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.verdict .next{font-size:14px;border-top:1px solid currentColor;padding-top:10px;opacity:.95}
+.yours{font-size:14px;background:rgba(255,255,255,.6);border-radius:var(--r-sm);padding:8px 12px}
+
+/* results */
+.score{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.score .n{font-family:var(--f-display);font-size:64px;font-weight:700;color:var(--lavender);line-height:1;font-variant-numeric:tabular-nums}
+.score .of{font-family:var(--f-display);font-size:22px;color:var(--ink)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:360px}
+th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1.5px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--ink)}
+.chip{display:inline-block;border-radius:var(--r-pill);padding:2px 10px;font-weight:600;font-size:12px;white-space:nowrap}
+.ok{color:var(--sat-mid);font-weight:700} .no{color:var(--dis-mid);font-weight:700}
+.discuss{display:flex;flex-direction:column;gap:8px}
+.discuss ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;color:var(--ink)}
+.foot{font-size:12px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app"></div>
+
+<script>
+(function(){
+const OUT = {
+  sat:{label:"Satisfied",cls:"o-sat",hear:"Clear understanding, positive tone, nothing open",next:"Document and close."},
+  part:{label:"Partly satisfied",cls:"o-part",hear:"Fix accepted, but confusion, a missing step or lingering doubt",next:"Begin the recovery cycle: close the gap they named."},
+  dis:{label:"Dissatisfied",cls:"o-dis",hear:"Frustration, mistrust, unmet expectation, talk of leaving",next:"Immediate recovery. Escalate to the Lead if compensation needs approval."}
+};
+const CLIPS = [
+  {id:"C1",lang:"en",answer:"sat",
+   said:"Honestly, it was all good. The agent explained the refund timeline and it arrived yesterday, exactly when she said. Nothing to add.",
+   cues:["it was all good","exactly when she said","Nothing to add"],
+   why:["Warm, relaxed tone with no \"but\".","The promise was kept: the refund came when the agent said it would.","\"Nothing to add\" means nothing is left open."]},
+  {id:"C2",lang:"ar",answer:"part",
+   said:"والله الموضوع انحل، بس للحين مو فاهم ليش القسط الثاني صار أكثر من الأول.",
+   tr:"It was solved, but I still don't get why the second instalment is higher.",
+   cues:["بس للحين مو فاهم","ليش القسط الثاني صار أكثر"],
+   why:["\"الموضوع انحل\" (it was solved): the fix is accepted.","\"بس\" (but) turns the sentence. Whatever comes after it is the real message.","\"مو فاهم\" (I don't get it): confusion about the instalment amount is still open."]},
+  {id:"C3",lang:"en",answer:"dis",trap:true,
+   said:"It's fixed, fine. But I had to call three times and explain everything again each time. I'm not sure I'll use it for big purchases anymore.",
+   cues:["It's fixed, fine","call three times","explain everything again","not sure I'll use it for big purchases anymore"],
+   why:["\"It's fixed, fine\" sounds positive but is flat and short. The fix alone didn't satisfy them.","Three calls and repeating the story is high effort and frustration.","\"Not sure I'll use it … anymore\" is talk of leaving. That makes it dissatisfied, not partly."]},
+  {id:"C4",lang:"ar",answer:"sat",
+   said:"الحمد لله كل شي تمام، الموظفة كانت متعاونة وشرحت لي كل شي.",
+   tr:"All good, the agent was helpful and explained everything.",
+   cues:["كل شي تمام","متعاونة","شرحت لي كل شي"],
+   why:["\"كل شي تمام\" (all good) with no \"بس\" after it.","Praise for the person: \"متعاونة\" (helpful).","\"شرحت لي كل شي\" (explained everything): they understand, nothing open."]},
+  {id:"C5",lang:"en",answer:"part",
+   said:"Yeah, the account's unlocked now. I just still don't know if it'll happen again next time I pay for something.",
+   cues:["unlocked now","still don't know if it'll happen again"],
+   why:["The fix is accepted: the account is unlocked.","\"I just still don't know\" is lingering doubt about the future.","No anger and no talk of leaving, so partly satisfied. Recovery means explaining why it happened and whether it can happen again."]},
+  {id:"C6",lang:"ar",answer:"dis",trap:true,
+   said:"بصراحة؟ ما حسيت أحد اهتم. الفلوس رجعت بس بعد أسبوعين من القلق، وما حد قال لي شي.",
+   tr:"Honestly? No one seemed to care. The money came back, but after two weeks of worry and no updates.",
+   cues:["ما حسيت أحد اهتم","أسبوعين من القلق","وما حد قال لي شي"],
+   why:["\"الفلوس رجعت\" (the money came back): the fix worked, but that is not the outcome.","\"ما حسيت أحد اهتم\" (no one seemed to care): an emotional hurt and a loss of trust.","Two weeks of worry with no updates is an unmet expectation. Care, not the refund, is what's missing."]}
+];
+
+const KEY="ers-listen-decide-v1";
+let S = load() || {name:"",step:-1,answers:{}};
+function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+const app=document.getElementById("app");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function highlight(text,cues){
+  let t=esc(text);
+  cues.forEach(c=>{const e=esc(c);t=t.split(e).join("<mark>"+e+"</mark>")});
+  return t;
+}
+
+/* ---------- voice ---------- */
+const synth = window.speechSynthesis || null;
+let voices=[];
+function loadVoices(){try{voices=synth?synth.getVoices():[]}catch(e){voices=[]}}
+if(synth){loadVoices();try{synth.onvoiceschanged=loadVoices}catch(e){}}
+function pickVoice(lang){
+  const v=voices.filter(v=>v.lang&&v.lang.toLowerCase().startsWith(lang));
+  if(lang==="ar"){return v.find(x=>/SA|AE|KW|QA|BH/i.test(x.lang))||v[0]||null}
+  return v.find(x=>/en-(GB|US)/i.test(x.lang))||v[0]||null;
+}
+function speak(clip,playerEl,noteEl){
+  if(!synth){noteEl.textContent="This browser can't read aloud. Tap \"Show the words\" and read it instead.";return}
+  if(synth.speaking){synth.cancel();playerEl.classList.remove("speaking");return}
+  const u=new SpeechSynthesisUtterance(clip.said);
+  u.lang=clip.lang==="ar"?"ar-SA":"en-GB";
+  const v=pickVoice(clip.lang); if(v)u.voice=v;
+  else if(clip.lang==="ar"){noteEl.textContent="No Arabic voice found on this device. If you hear nothing, tap \"Show the words\".";}
+  u.rate=clip.lang==="ar"?0.9:0.95;
+  u.onstart=()=>playerEl.classList.add("speaking");
+  u.onend=u.onerror=()=>playerEl.classList.remove("speaking");
+  synth.cancel(); synth.speak(u);
+}
+function stopVoice(){try{synth&&synth.cancel()}catch(e){}}
+
+/* ---------- screens ---------- */
+function render(){
+  stopVoice();
+  if(S.step<0) return intro();
+  if(S.step>=CLIPS.length) return results();
+  clip(S.step);
+}
+
+function header(){
+  return ``;
+}
+function legendHTML(){
+  return `<div class="legend">${Object.values(OUT).map(o=>`<div class="leg ${o.cls}"><b>${o.label}</b><small>${o.hear}</small></div>`).join("")}</div>`;
+}
+
+function intro(){
+  app.innerHTML=`${header()}
+  <h1>Listen and decide: how did this call end?</h1>
+  <div class="card">
+    <p class="lead">You'll hear 6 short answers from customers after a fix. For each one, decide how the call ended.</p>
+    ${legendHTML()}
+    <div class="tip"><b>Listen for:</b> not just what they say, but how they say it. "It's fixed" can still mean "I'm not happy".</div>
+    <div class="field"><label for="nm">Your name</label><input type="text" id="nm" autocomplete="name" placeholder="So the trainer knows whose answers these are" value="${esc(S.name)}"></div>
+    <div class="row"><button class="btn" id="go">${Object.keys(S.answers).length?"Continue":"Start with clip C1"}</button>
+    ${Object.keys(S.answers).length?`<button class="btn-ghost" id="reset">Start over</button>`:""}</div>
+    <p class="note">Each clip plays with your device's built-in voice, in English or Arabic. The voice is flat, so listen hard to the words. On a real call you'll also hear tone.</p>
+  </div>`;
+  document.getElementById("go").onclick=()=>{S.name=document.getElementById("nm").value.trim();S.step=firstOpen();save();render()};
+  const r=document.getElementById("reset"); if(r) r.onclick=resetAll;
+}
+function firstOpen(){const i=CLIPS.findIndex(c=>!(S.answers[c.id]&&S.answers[c.id].locked));return i<0?CLIPS.length:i}
+function resetAll(){S={name:S.name,step:-1,answers:{}};save();render()}
+
+function rail(i){
+  const done=CLIPS.filter(c=>S.answers[c.id]&&S.answers[c.id].locked).length;
+  return `<div class="rail">${CLIPS.map((c,k)=>{
+    const a=S.answers[c.id];const cls=k===i?"cur":(a&&a.locked?"done":"");
+    return `<button class="dot ${cls}" data-go="${k}" aria-label="Clip ${c.id}">${c.id}</button>`}).join("")}
+    <span class="count">${done} of ${CLIPS.length} done</span></div>`;
+}
+
+function clip(i){
+  const c=CLIPS[i];
+  const a=S.answers[c.id]||{pick:null,heard:"",locked:false,shown:false};
+  const locked=a.locked;
+  const correct=a.pick===c.answer;
+  const o=OUT[c.answer];
+  app.innerHTML=`${header()}${rail(i)}
+  <div class="card">
+    <div class="eyebrow">Clip ${c.id} · ${c.lang==="ar"?"Arabic":"English"}</div>
+    <div class="player" id="pl">
+      <button class="play" id="play" aria-label="Play clip ${c.id}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg></button>
+      <div class="meta"><b>Customer's answer</b><small>After: "Did the previous resolution fully address your issue?"</small></div>
+      <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <p class="note" id="vnote" aria-live="polite"></p>
+    ${(a.shown||locked)?`<div class="script">
+        <div class="said" ${c.lang==="ar"?'dir="rtl" lang="ar"':''}>${locked?highlight(c.said,c.cues):esc(c.said)}</div>
+        ${c.tr&&locked?`<div class="tr">${esc(c.tr)}</div>`:""}
+      </div>`:`<div class="row"><button class="btn-ghost" id="show">Show the words</button><span class="note">Try listening first.</span></div>`}
+
+    <div class="field"><label>How did the call end?</label>
+      <div class="choices">${Object.entries(OUT).map(([k,v])=>`<button class="choice ${v.cls} ${locked&&a.pick!==k&&c.answer!==k?"dim":""}" data-pick="${k}" aria-pressed="${a.pick===k}" ${locked?"disabled":""}><span class="tick"></span>${v.label}</button>`).join("")}</div>
+    </div>
+    ${locked?"":`<div class="row"><button class="btn" id="check" ${a.pick?"":"disabled"}>Check my answer</button><span class="note" id="hint">${a.pick?"":"Pick an outcome first."}</span></div>`}
+    ${locked?`<div class="verdict ${o.cls}">
+      <h3>${correct?"Yes, ":"Not quite. This one is "}${o.label.toLowerCase()}.${c.trap&&!correct?" The fix worked, but that isn't the outcome.":""}</h3>
+      ${!correct?`<div class="yours">You chose: ${OUT[a.pick].label}</div>`:""}
+      <ul>${c.why.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>
+      <div class="next"><b>Next step (SOP 7.3):</b> ${o.next}</div>
+    </div>
+    <div class="row"><button class="btn" id="next">${i<CLIPS.length-1?"Next clip: "+CLIPS[i+1].id:"See my results"}</button></div>`:""}
+  </div>`;
+
+  const pl=document.getElementById("pl"),vn=document.getElementById("vnote");
+  document.getElementById("play").onclick=()=>speak(c,pl,vn);
+  const sh=document.getElementById("show"); if(sh) sh.onclick=()=>{a.shown=true;S.answers[c.id]=a;save();clip(i)};
+  if(!locked){
+    app.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{
+      a.pick=b.dataset.pick;S.answers[c.id]=a;save();
+      app.querySelectorAll("[data-pick]").forEach(x=>x.setAttribute("aria-pressed",x===b));syncBtn();
+    });
+    document.getElementById("check").onclick=()=>{a.locked=true;S.answers[c.id]=a;save();clip(i)};
+  }
+  function syncBtn(){document.getElementById("check").disabled=!a.pick;document.getElementById("hint").textContent=a.pick?"":"Pick an outcome first."}
+  const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{S.step=i+1;save();render();window.scrollTo(0,0)};
+  app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{S.step=+b.dataset.go;save();render()});
+}
+
+function results(){
+  const rows=CLIPS.map(c=>{const a=S.answers[c.id]||{};return {c,a,ok:a.pick===c.answer}});
+  const n=rows.filter(r=>r.ok).length;
+  const missedTraps=rows.filter(r=>r.c.trap&&!r.ok).length;
+  const msg = n===6?"All six. You heard past the fix every time."
+    : missedTraps? "Watch the clips where the fix worked but the customer still wasn't happy (C3 and C6). A working fix doesn't make a satisfied customer."
+    : "Look at the ones you missed and find the word that changed the outcome.";
+  app.innerHTML=`${header()}${rail(-1)}
+  <h1>Your results${S.name?", "+esc(S.name):""}</h1>
+  <div class="card">
+    <div class="score"><span class="n">${n}</span><span class="of">of 6 matched</span></div>
+    <p class="lead">${msg}</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Clip</th><th>You said</th><th>Outcome</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr>
+        <td><b>${r.c.id}</b></td>
+        <td>${r.a.pick?`<span class="chip ${OUT[r.a.pick].cls}">${OUT[r.a.pick].label}</span> <span class="${r.ok?"ok":"no"}" aria-label="${r.ok?"match":"no match"}">${r.ok?"✓":"✗"}</span>`:"–"}</td>
+        <td><span class="chip ${OUT[r.c.answer].cls}">${OUT[r.c.answer].label}</span></td></tr>`).join("")}</tbody>
+    </table></div>
+    <div class="row"><button class="btn-ghost" id="copy">Copy my answers</button><button class="btn-ghost" id="again">Try again</button><span class="note" id="cn" aria-live="polite"></span></div>
+  </div>
+  <div class="card discuss">
+    <h2>Be ready to share</h2>
+    <ol>
+      <li>Which clip was hardest to call, and what word or phrase decided it for you?</li>
+      <li>C3 and C6 both say the problem is fixed. What makes them dissatisfied, not partly satisfied?</li>
+      <li>For one partly satisfied customer, what would you say next to close the gap?</li>
+    </ol>
+  </div>
+  <p class="foot">ERS Day 2 · SOP 7.2 validation questions, SOP 7.3 outcomes · Clips C1–C6</p>`;
+  document.getElementById("again").onclick=resetAll;
+  document.getElementById("copy").onclick=()=>{
+    const txt=`Listen and decide – ${S.name||"(no name)"} – ${n}/6\n`+rows.map(r=>`${r.c.id}: ${r.a.pick?OUT[r.a.pick].label:"-"} (answer: ${OUT[r.c.answer].label})`).join("\n");
+    const cn=document.getElementById("cn");
+    try{navigator.clipboard.writeText(txt).then(()=>cn.textContent="Copied.",()=>cn.textContent="Couldn't copy. Select the table instead.")}catch(e){cn.textContent="Couldn't copy. Select the table instead."}
+  };
+  app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{S.step=+b.dataset.go;save();render()});
+}
+
+render();
+})();
+</script>
+
+</body>
+</html>
